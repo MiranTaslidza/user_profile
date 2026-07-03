@@ -1,7 +1,7 @@
 from django.db import models
 from .user import User
 
-Class SocialAccount(models.Model):
+class SocialAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE) # povezuje se sa modelom User
     provider = models.CharField(max_length=255) # ime provajdera (npr. Google, Facebook)
     provider_id = models.CharField(max_length=255) # ID korisnika kod provajdera

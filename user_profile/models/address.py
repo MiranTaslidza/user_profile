@@ -7,7 +7,7 @@ class Address(models.Model):
     city = models.CharField(max_length=100, blank=True) # grad
     postal_code = models.CharField(max_length=10, blank=True) #poštarski kod
     street = models.CharField(max_length=100, blank=True) # ulica 
-    number =models.CharField(blank=True) # broj ulice
+    number = models.CharField(max_length=20, blank=True)
     is_default = models.BooleanField(default=False) # glavna ili zadana adresa
     
     def __str__(self):
