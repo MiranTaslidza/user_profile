@@ -12,6 +12,17 @@
 {% block content %}
 
     <h1>All user</h1>
+    <!-- prikaz poruke ukoliko nema korisnika -->
+    {% if message %}
+        <p>{{ message }}</p>
+    <!-- ukoliko ima korisnika prikaz korisnika -->
+    {% else %}
+        <ul>
+            {% for user in users %}
+                <li>{{ user.username }} - {{ user.email }}</li>
+            {% endfor %} 
+        </ul>   
+    {% endif %}
 
 {% endblock content %}
 
