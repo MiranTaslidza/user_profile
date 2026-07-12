@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Resend verification email{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm mt-5">
+    <div class="card-body">
+        <h2>Resend verification email</h2>
+
+        <p>
+            Enter the email address you used during registration.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit" class="btn btn-primary">
+                Send verification email
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

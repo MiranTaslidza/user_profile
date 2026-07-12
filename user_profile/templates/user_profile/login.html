@@ -1,0 +1,41 @@
+{% extends 'base.html' %} <!-- uvoizim sadržaj base.html -->
+
+{% block title %}Login{% endblock title %} <!-- ovdje se menja title -->
+
+{% load static %} <!-- uvoizim static fajle -->
+
+<!-- blok za JS static fajlova -->
+{% block scripts %}
+{% endblock scripts %}
+
+<!-- blok za sadržaj -->
+{% block content %}
+
+
+
+<form method="post">
+
+        {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+
+            {% if error == "You must first verify your email address." %}
+                <p>
+                    Didn't receive the verification email?
+
+                    <a href="{% url 'resend_verification_email' %}">
+                        Send verification email again
+                    </a>
+                </p>
+            {% endif %}
+        {% endfor %}
+        {% endif %}
+
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login</button>
+</form>
+
+{% endblock content %}
