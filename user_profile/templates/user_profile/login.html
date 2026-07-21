@@ -1,41 +1,58 @@
-{% extends 'base.html' %} <!-- uvoizim sadržaj base.html -->
+{% extends 'base.html' %}
 
-{% block title %}Login{% endblock title %} <!-- ovdje se menja title -->
+{% block title %}Login{% endblock title %}
 
-{% load static %} <!-- uvoizim static fajle -->
+{% load static %}
 
-<!-- blok za JS static fajlova -->
 {% block scripts %}
 {% endblock scripts %}
 
-<!-- blok za sadržaj -->
 {% block content %}
 
+<div class="login-container">
 
+    <h2>Login</h2>
 
-<form method="post">
+    <form method="post">
+
+        {% csrf_token %}
 
         {% if form.non_field_errors %}
         {% for error in form.non_field_errors %}
-            <div class="alert alert-danger">
-                {{ error }}
-            </div>
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
 
-            {% if error == "You must first verify your email address." %}
-                <p>
-                    Didn't receive the verification email?
-
-                    <a href="{% url 'resend_verification_email' %}">
-                        Send verification email again
-                    </a>
-                </p>
-            {% endif %}
+        {% if error == "You must first verify your email address." %}
+        <div class="mt-2">
+            Didn't receive the verification email?
+            <a href="{% url 'resend_verification_email' %}">
+                Send it again
+            </a>
+        </div>
+        {% endif %}
         {% endfor %}
         {% endif %}
 
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-</form>
+        {{ form.as_p }}
+
+        <button type="submit">
+            Login
+        </button>
+
+    </form>
+
+    <hr>
+
+    <div class="login-links">
+
+        <a href="{% url 'password_reset' %}">
+            <i class="fas fa-key"></i>
+            Forgot your password?
+        </a>
+
+    </div>
+
+</div>
 
 {% endblock content %}

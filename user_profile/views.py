@@ -132,4 +132,5 @@ class ResendVerificationEmailView(FormView):
 
         return super().form_valid(form)
     
-    
+# zaboravljen password
+
