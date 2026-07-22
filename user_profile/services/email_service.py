@@ -42,3 +42,36 @@ def send_verification_email(request, user):
         fail_silently=False,
     )
 
+
+# slanje poruke na promjenu lozinke
+def send_password_changed_email(request, user):
+    reset_url = request.build_absolute_uri(
+        reverse("password_reset")
+    )
+
+    subject = "Your password has been changed"
+
+    message = f"""
+        Hello {user.username},
+
+        This email confirms that your account password has been changed.
+
+        If this was you, no further action is required.
+
+        If you do not recognize this activity, you should reset your password immediately using the link below:
+
+        {reset_url}
+
+        If you need additional assistance, please contact support.
+
+        Best regards,
+        Security Team
+    """
+
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )

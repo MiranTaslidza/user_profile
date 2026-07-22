@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.urls import reverse_lazy #za preusmjeravanje na drugu stranicu
 from django.views.generic.edit import CreateView # za prikaz forme za registraciju korisnika
-from django.contrib.auth.views import LoginView # za prikaz forme za login korisnika
+from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordChangeDoneView
 from django.http import HttpResponse # za prikaz poruke nakon slanja emaila
 from django.contrib.auth.tokens import default_token_generator # za generisanje tokena za verifikaciju email adrese
 from django.utils.http import  urlsafe_base64_decode # za kodiranje ID korisnika u base64 format na siguran način za URL
@@ -9,14 +9,17 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.views.generic.edit import FormView
 
+
+
 # Model obično uvozimo iz models foldera kroz __init__.py ili direktno
 from .models.user import User
 
 # forme
 from .forms.register_form import RegisterForm  # Uvozimo formu iz tvog paketa
 from .forms.login_form import CustomLoginForm  # Uvozimo formu za login
-from .services.email_service import send_verification_email
+from .services.email_service import send_verification_email, send_password_changed_email
 from .forms.resend_verification_form import ResendVerificationForm
+
 
 
 
@@ -132,5 +135,28 @@ class ResendVerificationEmailView(FormView):
 
         return super().form_valid(form)
     
-# zaboravljen password
+# promjena password-a
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = "user_profile/password_change_form.html"
+    # success_url = reverse_lazy("password_change_done")
+    success_url = reverse_lazy("all_user")
+    # da bi me poruka prikazivala mmora iči u funkciju
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        messages.success(
+            self.request,
+            "Your password has been updated successfully."
+        )
+
+        # ovdje postavljam logiku o slanju maila
+        send_password_changed_email(
+            request=self.request,
+            user=self.request.user,
+        )
+
+        return response
+
+
+
 
