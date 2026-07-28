@@ -1,0 +1,56 @@
+
+<h2>Confirm email change request</h2>
+
+<p>
+    Hello {{ user.username }},
+</p>
+
+<p>
+    We received a request to change the email address connected to your account.
+</p>
+
+<p>
+    Current email address:
+</p>
+
+<p>
+    <strong>
+        {{ email_change.old_email }}
+    </strong>
+</p>
+
+
+<p>
+    New email address:
+</p>
+
+<p>
+    <strong>
+        {{ email_change.new_email }}
+    </strong>
+</p>
+
+
+<p>
+    To continue with this change, please confirm that you still have access
+    to your current email address.
+</p>
+
+
+<p>
+    <a href="{{ verification_url }}">
+        Confirm email change
+    </a>
+</p>
+
+
+<p>
+    If you did not request this change, ignore this email.
+    Your email address will not be changed.
+</p>
+
+
+<p>
+    Best regards,<br>
+    Security Team
+</p>

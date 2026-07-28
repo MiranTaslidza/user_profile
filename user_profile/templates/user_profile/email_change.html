@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock title %}
+
+{% load static %}
+
+{% block scripts %}
+{% endblock scripts %}
+
+{% block content %}
+
+<h2>Change email address</h2>
+
+<p>
+    Enter your new email address and confirm your current password.
+</p>
+
+<form method="post">
+
+    {% csrf_token %}
+
+
+    <!-- Prikaz grešaka forme -->
+    {% if form.errors %}
+        <div>
+            <p>Please correct the following errors:</p>
+
+            {{ form.errors }}
+        </div>
+    {% endif %}
+
+
+    <!-- Nova email adresa -->
+    <div>
+        <label for="{{ form.new_email.id_for_label }}">
+            New email address
+        </label>
+
+        {{ form.new_email }}
+    </div>
+
+
+    <!-- Trenutna lozinka -->
+    <div>
+        <label for="{{ form.current_password.id_for_label }}">
+            Current password
+        </label>
+
+        {{ form.current_password }}
+    </div>
+
+
+    <button type="submit">
+        Request email change
+    </button>
+
+</form>
+
+{% endblock content %}

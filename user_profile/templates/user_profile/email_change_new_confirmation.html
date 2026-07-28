@@ -1,0 +1,44 @@
+
+<h2>Confirm your new email address</h2>
+
+<p>
+    Hello {{ user.username }},
+</p>
+
+<p>
+    Your previous email address has been confirmed.
+</p>
+
+<p>
+    We can now complete your email change request.
+</p>
+
+<p>
+    New email address:
+</p>
+
+<p>
+    <strong>
+        {{ email_change.new_email }}
+    </strong>
+</p>
+
+<p>
+    To confirm this new email address, click the button below:
+</p>
+
+<p>
+    <a href="{{ verification_url }}">
+        Verify new email address
+    </a>
+</p>
+
+<p>
+    If you did not request this email change, please ignore this message
+    and secure your account immediately.
+</p>
+
+<p>
+    Best regards,<br>
+    Security Team
+</p>

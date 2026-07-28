@@ -1,9 +1,11 @@
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.urls import reverse
+from django.template.loader import render_to_string
+
 
 # funkcija za slanje emaila
 def send_verification_email(request, user): 
@@ -75,3 +77,198 @@ def send_password_changed_email(request, user):
         recipient_list=[user.email],
         fail_silently=False,
     )
+    
+    
+# promjena  email slanje podataka na stari email
+def send_old_email_change_confirmation(request, email_change):
+    """
+    Šalje potvrdu na staru email adresu.
+
+    Ovo je prvi sigurnosni korak kod promjene emaila.
+    Korisnik prvo mora dokazati da još uvijek ima pristup starom emailu.
+    """
+
+    # Pravimo URL za potvrdu starog emaila.
+    #
+    # Koristimo old_email_token jer se ovaj link odnosi
+    # samo na potvrdu starog emaila.
+    verification_url = request.build_absolute_uri(
+        reverse(
+            "email_change_old_verify",
+            kwargs={
+                "token": email_change.old_email_token
+            },
+        )
+    )
+
+
+    # Podaci koji će biti poslani HTML template-u.
+    context = {
+        "user": email_change.user,
+        "email_change": email_change,
+        "verification_url": verification_url,
+    }
+
+
+    # HTML sadržaj emaila.
+    html_message = render_to_string(
+        "user_profile/email_change_old_confirmation.html",
+        context,
+    )
+
+
+    # Tekstualna verzija emaila.
+    text_message = (
+        f"Hello {email_change.user.username},\n\n"
+        "A request was made to change your email address.\n\n"
+        "If you requested this change, confirm it using this link:\n\n"
+        f"{verification_url}\n\n"
+        "If you did not request this change, ignore this message."
+    )
+
+
+    # Kreiranje email poruke.
+    email = EmailMultiAlternatives(
+        subject="Confirm email change request",
+        body=text_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[email_change.old_email],
+    )
+
+
+    # Dodavanje HTML verzije.
+    email.attach_alternative(
+        html_message,
+        "text/html",
+    )
+
+
+    # Slanje emaila.
+    email.send()
+    
+# slanje emaila na novi mail
+def send_new_email_change_confirmation(request, email_change):
+    """
+    Šalje verifikaciju na novu email adresu.
+
+    Ova funkcija se poziva tek nakon što je korisnik
+    potvrdio stari email.
+    """
+
+    # Pravljenje linka za potvrdu nove email adrese.
+    verification_url = request.build_absolute_uri(
+        reverse(
+            "email_change_new_verify",
+            kwargs={
+                "token": email_change.new_email_token
+            },
+        )
+    )
+
+
+    # Podaci koji se šalju HTML template-u.
+    context = {
+        "user": email_change.user,
+        "email_change": email_change,
+        "verification_url": verification_url,
+    }
+
+
+    # HTML sadržaj emaila.
+    html_message = render_to_string(
+        "email_change_new_confirmation.html",
+        context,
+    )
+
+
+    # Tekstualna verzija emaila.
+    text_message = (
+        f"Hello {email_change.user.username},\n\n"
+        "Confirm your new email address using this link:\n\n"
+        f"{verification_url}"
+    )
+
+
+    # Kreiranje email poruke.
+    email = EmailMultiAlternatives(
+        subject="Confirm your new email address",
+        body=text_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[email_change.new_email],
+    )
+
+
+    # Dodavanje HTML verzije.
+    email.attach_alternative(
+        html_message,
+        "text/html",
+    )
+
+
+    # Slanje emaila.
+    email.send()
+    
+# slanje emaila na novi email
+def send_new_email_change_confirmation(request, email_change):
+    """
+    Šalje verifikaciju na novu email adresu.
+
+    Ova funkcija se poziva tek nakon što je korisnik
+    potvrdio stari email.
+    """
+
+    # Pravljenje linka za potvrdu nove email adrese.
+    verification_url = request.build_absolute_uri(
+        reverse(
+            "email_change_new_verify",
+            kwargs={
+                "token": email_change.new_email_token
+            },
+        )
+    )
+
+
+    # Podaci koji se šalju HTML template-u.
+    context = {
+        "user": email_change.user,
+        "email_change": email_change,
+        "verification_url": verification_url,
+    }
+
+
+    # HTML sadržaj emaila.
+    html_message = render_to_string(
+        "user_profile/email_change_new_confirmation.html",
+        context,
+    )
+
+
+    # Tekstualna verzija emaila.
+    text_message = (
+        f"Hello {email_change.user.username},\n\n"
+        "Confirm your new email address using this link:\n\n"
+        f"{verification_url}\n\n"
+        "If you did not request this change, ignore this email."
+    )
+
+
+    # Kreiranje email poruke.
+    email = EmailMultiAlternatives(
+        subject="Confirm your new email address",
+        body=text_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[email_change.new_email],
+    )
+
+
+    # Dodavanje HTML verzije.
+    email.attach_alternative(
+        html_message,
+        "text/html",
+    )
+
+
+    # Slanje emaila.
+    email.send()
+    
+    
