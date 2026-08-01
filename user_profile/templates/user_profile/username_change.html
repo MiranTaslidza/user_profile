@@ -1,0 +1,21 @@
+{% extends 'base.html' %} <!-- uvoizim sadržaj base.html -->
+
+{% block title %}Username change{% endblock title %}   <!-- ovdje se menja title -->
+
+{% load static %} <!-- uvoizim static fajle -->
+
+<!-- blok za JS static fajlova -->
+{% block scripts %}
+{% endblock scripts %}
+
+<!-- blok za sadržaj -->
+{% block content %}
+
+    <h1>Change username</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Change Username</button>
+    </form>
+
+{% endblock content %}

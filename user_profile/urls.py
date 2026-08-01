@@ -29,4 +29,8 @@ urlpatterns = [
     path("email-change/", views.EmailChangeView.as_view(), name="email_change"), # link za unos promjene emaila i slanja nalinka na stari email
     path("email-change/old-verify/<str:token>/", views.EmailChangeOldVerifyView.as_view(), name="email_change_old_verify"), # verifikacija starog emaila
     path("email-change/new-verify/<str:token>/", views.EmailChangeNewVerifyView.as_view(), name="email_change_new_verify"), # verifikacija novog emaila
+
+    # promjena korisničkog imena
+    path("username_change/", views.UserNameChange.as_view(), name="username_change")
+
 ]

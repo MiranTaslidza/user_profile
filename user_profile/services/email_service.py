@@ -271,4 +271,35 @@ def send_new_email_change_confirmation(request, email_change):
     # Slanje emaila.
     email.send()
     
+# slanje e-mail obavijesti za promjenu korisničkog imena
+def send_username_changed_email(user, old_username):
     
+    subject = "Your username has been changed"
+
+    message = f"""
+        Hello {user.first_name},
+
+        This message confirms that your account username has been changed.
+
+        Previous username:
+        {old_username}
+
+        New username:
+        {user.username}
+
+        If this was you, no further action is required.
+
+        If you do not recognize this activity, please change your password immediately
+        and contact support.
+
+        Best regards,
+        Security Team
+    """
+
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )

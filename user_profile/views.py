@@ -22,9 +22,11 @@ from .models.email_change import EmailChange
 # forme
 from .forms.register_form import RegisterForm  # Uvozimo formu iz tvog paketa
 from .forms.login_form import CustomLoginForm  # Uvozimo formu za login
-from .services.email_service import send_verification_email, send_password_changed_email, send_old_email_change_confirmation, send_new_email_change_confirmation
+from .services.email_service import send_verification_email, send_password_changed_email, send_old_email_change_confirmation, send_new_email_change_confirmation, send_username_changed_email
 from .forms.resend_verification_form import ResendVerificationForm
 from .forms.email_change_form import EmailChangeForm
+from .forms.username_change_form import UsernameChangeForm
+
 
 
 # prikaz svih korisnika
@@ -379,3 +381,75 @@ class EmailChangeNewVerifyView(View):
 
 
         return redirect("all_user")
+    
+    
+# promjena username 
+    """
+    u parametrima
+    LoginRequiredMixin -da samo prijavljen korisnik može promijeniti ime
+    FormView je samo da koristim formu
+    """
+class UserNameChange(LoginRequiredMixin, FormView):
+    """
+    Promjena korisničkog imena.
+
+    LoginRequiredMixin:
+    - samo prijavljeni korisnici mogu mijenjati username.
+
+    FormView:
+    - koristi Django formu za unos i validaciju podataka.
+    """
+
+    form_class = UsernameChangeForm
+
+    template_name = "user_profile/username_change.html"
+
+    success_url = "/"
+
+
+    def get_form_kwargs(self):
+        """
+        Šaljemo trenutnog korisnika formi.
+
+        Forma treba korisnika zbog provjere:
+        - da novi username nije isti kao trenutni
+        - da novi username ne koristi drugi korisnik
+        """
+
+        kwargs = super().get_form_kwargs()
+
+        kwargs["user"] = self.request.user
+
+        return kwargs
+
+
+
+    def form_valid(self, form):
+        """
+        Izvršava se kada je forma uspješno prošla validaciju.
+        """
+
+        user = self.request.user
+
+
+        # Čuvamo staro korisničko ime
+        # prije nego ga promijenimo.
+        old_username = user.username
+
+
+        # Postavljamo novo korisničko ime.
+        user.username = form.cleaned_data["new_username"]
+
+
+        # Snimamo promjenu u bazu.
+        user.save()
+
+
+        # Šaljemo sigurnosnu obavijest na email.
+        send_username_changed_email(
+            user,
+            old_username
+        )
+
+
+        return super().form_valid(form)
