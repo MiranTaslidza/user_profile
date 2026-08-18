@@ -11,6 +11,7 @@ from django.views.generic.edit import FormView
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import login
 from datetime import timedelta
 from django.views import View
 
@@ -18,6 +19,7 @@ from django.views import View
 # Model obično uvozimo iz models foldera kroz __init__.py ili direktno
 from .models.user import User
 from .models.email_change import EmailChange
+from .models.social_account import SocialAccount
 
 # forme
 from .forms.register_form import RegisterForm  # Uvozimo formu iz tvog paketa
@@ -26,6 +28,8 @@ from .services.email_service import send_verification_email, send_password_chang
 from .forms.resend_verification_form import ResendVerificationForm
 from .forms.email_change_form import EmailChangeForm
 from .forms.username_change_form import UsernameChangeForm
+from .services.google_oauth_service import get_google_authorization_url, exchange_code_for_token, get_google_user_info
+
 
 
 
@@ -51,10 +55,74 @@ class CustomLoginView(LoginView):
     # preusmejrenje rediract ide ovako akonema ovoga ide na account/profile to jeste vodi na profilnu stranicu.
     def get_success_url(self):
         return reverse_lazy('all_user')
+
+    
+# google oauth login view
+class GoogleLoginView(View):
+    """
+    Pokreće Google OAuth prijavu.
+
+    Kada korisnik otvori ovaj view,
+    Django ga preusmjerava na Google login stranicu.
+    """
+
+    def get(self, request):
+
+        # Service kreira Google OAuth URL.
+        google_url = get_google_authorization_url()
+
+        # Šaljemo korisnika na Google.
+        return redirect(google_url)
+    
+    
+# Google login Callback View.
+class GoogleCallbackView(View):
+    """
+    Prima odgovor koji Google šalje nakon uspješne prijave.
+
+    Google nam šalje privremeni authorization code.
+    Taj code mijenjamo za access token,
+    a zatim pomoću access tokena uzimamo podatke korisnika.
+    """
+
+    def get(self, request):
+
+        # Uzimamo authorization code koji je Google
+        # poslao kroz URL:
+        #
+        # /google/callback/?code=XXXXXXXX
+        code = request.GET.get("code")
+
+        # Ako Google nije poslao code,
+        # ne možemo nastaviti OAuth proces.
+        if not code:
+            return redirect("login")
+
+        # Authorization code mijenjamo za Google token.
+        token_data = exchange_code_for_token(code)
+
+        # Uzimamo access token iz odgovora Google-a.
+        access_token = token_data.get("access_token")
+
+        # Ako nismo dobili access token,
+        # OAuth proces nije uspješno završen.
+        if not access_token:
+            return redirect("login")
+
+        # Pomoću access tokena tražimo podatke
+        # o Google korisniku.
+        google_user = get_google_user_info(access_token)
+
+        # Za sada samo ispisujemo podatke u terminal.
+        # Ovo ćemo kasnije zamijeniti stvarnim loginom
+        # i povezivanjem User + SocialAccount modela.
+        print("GOOGLE USER:", google_user)
+
+        return redirect("/")
     
 
 
-# funkcija za verifikaciju emaila
+# funkcija za verifikaciju emaila 
 def verify_email(request, uidb64, token):
     try:
         # Dekodira ID korisnika iz URL-a
@@ -81,7 +149,138 @@ def verify_email(request, uidb64, token):
 
     return HttpResponse("Verifikacioni link nije ispravan ili je istekao.")
     
+# da korisnik postane stvarno pijavljen GoogleCallbackViewsUser
+class GoogleCallbackView(View):
 
+    def get(self, request):
+
+        # Uzimamo authorization code koji Google vraća
+        code = request.GET.get("code")
+
+        # Ako code ne postoji, prekidamo login
+        if not code:
+            messages.error(request, "Google login failed.")
+            return redirect("login")
+
+        # Mijenjamo code za access token
+        token_data = exchange_code_for_token(code)
+
+        # Uzimamo access token
+        access_token = token_data.get("access_token")
+
+        # Ako nema access tokena, login nije uspio
+        if not access_token:
+            messages.error(request, "Google authentication failed.")
+            return redirect("login")
+
+        # Uzimamo podatke Google korisnika
+        google_user = get_google_user_info(access_token)
+
+        # Google jedinstveni ID korisnika
+        google_id = google_user.get("sub")
+
+        # Email korisnika
+        email = google_user.get("email")
+
+        # Da li je Google email verificiran
+        email_verified = google_user.get("email_verified", False)
+
+        # Ime korisnika
+        first_name = google_user.get("given_name", "")
+
+        # Prezime korisnika
+        last_name = google_user.get("family_name", "")
+
+        # Bez Google ID-a ne možemo nastaviti
+        if not google_id:
+            messages.error(request, "Google user ID is missing.")
+            return redirect("login")
+
+        # Ne prihvatamo neverifikovan Google email
+        if not email or not email_verified:
+            messages.error(request, "Google email is not verified.")
+            return redirect("login")
+
+        # Prvo provjeravamo da li Google nalog već postoji
+        social_account = SocialAccount.objects.filter(
+            provider="google",
+            provider_id=google_id
+        ).select_related("user").first()
+
+        if social_account:
+
+            # Ako postoji SocialAccount, koristimo povezanog korisnika
+            user = social_account.user
+
+        else:
+
+            # Provjeravamo postoji li User sa istim emailom
+            user = User.objects.filter(
+                email__iexact=email
+            ).first()
+
+            if user:
+
+                # Povezujemo postojeći User sa Google nalogom
+                SocialAccount.objects.create(
+                    user=user,
+                    provider="google",
+                    provider_id=google_id
+                )
+
+            else:
+
+                # Kreiramo osnovni username iz email adrese
+                base_username = email.split("@")[0]
+
+                username = base_username
+
+                counter = 1
+
+                # Ako username postoji, dodajemo broj
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+
+                # Kreiramo novog korisnika
+                user = User.objects.create(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    is_verified=True
+                )
+
+                # Google korisnik nema lokalnu lozinku
+                user.set_unusable_password()
+
+                user.save()
+
+                # Kreiramo SocialAccount vezu
+                SocialAccount.objects.create(
+                    user=user,
+                    provider="google",
+                    provider_id=google_id
+                )
+
+        # Ne dozvoljavamo login neaktivnom korisniku
+        if not user.is_active:
+            messages.error(request, "This account is inactive.")
+            return redirect("login")
+
+        # Prijavljujemo korisnika u Django sesiju
+        login(
+            request,
+            user,
+            backend="django.contrib.auth.backends.ModelBackend"
+        )
+
+        messages.success(
+            request,
+            "You have successfully signed in with Google."
+        )
+
+        return redirect("all_user")
 
 # prikaz forme za registraciju korisnika
 class RegisterView(CreateView):

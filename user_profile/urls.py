@@ -20,7 +20,7 @@ urlpatterns = [
     path("password-reset/done/", auth_views.PasswordResetDoneView.as_view(template_name="user_profile/password_reset_done.html"), name="password_reset_done"),
     path("reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(template_name="user_profile/password_reset_confirm.html"), name="password_reset_confirm" ),
     path("reset/complete/", auth_views.PasswordResetCompleteView.as_view(template_name="user_profile/password_reset_complete.html"), name="password_reset_complete"),
-   
+
     # promjena passworda
     path("change-password/", views.CustomPasswordChangeView.as_view(), name="password_change"),
     
@@ -31,6 +31,10 @@ urlpatterns = [
     path("email-change/new-verify/<str:token>/", views.EmailChangeNewVerifyView.as_view(), name="email_change_new_verify"), # verifikacija novog emaila
 
     # promjena korisničkog imena
-    path("username_change/", views.UserNameChange.as_view(), name="username_change")
+    path("username_change/", views.UserNameChange.as_view(), name="username_change"),
+    
+    # google login
+    path("google/login/", views.GoogleLoginView.as_view(), name="google_login"),
+    path("google/callback/", views.GoogleCallbackView.as_view(), name="google_callback"),
 
 ]

@@ -18,20 +18,23 @@
         {% csrf_token %}
 
         {% if form.non_field_errors %}
-        {% for error in form.non_field_errors %}
-        <div class="alert alert-danger">
-            {{ error }}
-        </div>
+            {% for error in form.non_field_errors %}
 
-        {% if error == "You must first verify your email address." %}
-        <div class="mt-2">
-            Didn't receive the verification email?
-            <a href="{% url 'resend_verification_email' %}">
-                Send it again
-            </a>
-        </div>
-        {% endif %}
-        {% endfor %}
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+
+                {% if error == "You must first verify your email address." %}
+                    <div class="mt-2">
+                        Didn't receive the verification email?
+
+                        <a href="{% url 'resend_verification_email' %}">
+                            Send it again
+                        </a>
+                    </div>
+                {% endif %}
+
+            {% endfor %}
         {% endif %}
 
         {{ form.as_p }}
@@ -41,6 +44,17 @@
         </button>
 
     </form>
+
+
+<div class="login-divider">
+    <span>or</span>
+</div>
+
+<a href="{% url 'google_login' %}" class="google-login-button">
+    <span class="google-logo">G</span>
+    <span>Continue with Google</span>
+</a>
+
 
     <hr>
 
