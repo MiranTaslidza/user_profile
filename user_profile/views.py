@@ -14,7 +14,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import login
 from datetime import timedelta
 from django.views import View
-
+from django.views.generic import DetailView, UpdateView
+from .models.profile import Profile
 
 # Model obično uvozimo iz models foldera kroz __init__.py ili direktno
 from .models.user import User
@@ -29,8 +30,7 @@ from .forms.resend_verification_form import ResendVerificationForm
 from .forms.email_change_form import EmailChangeForm
 from .forms.username_change_form import UsernameChangeForm
 from .services.google_oauth_service import get_google_authorization_url, exchange_code_for_token, get_google_user_info
-
-
+from .forms.profile_update_form import ProfileUpdateForm
 
 
 # prikaz svih korisnika
@@ -46,7 +46,75 @@ def all_user(request):
     return render(request, 'user_profile/all_user.html', {'users': users})
 
 
+# prikaz profila prijavljenog korisnika
+class ProfileDetailView(LoginRequiredMixin, DetailView):
 
+    model = Profile
+
+    template_name = "user_profile/profile_detail.html"
+
+    context_object_name = "profile"
+
+    def get_object(self, queryset=None):
+
+        # Tražimo profil trenutno prijavljenog korisnika.
+        # Ako profil još ne postoji, automatski ga kreiramo.
+        profile, created = Profile.objects.get_or_create(
+            user=self.request.user
+        )
+
+        return profile
+    
+
+# prikaz profila drugog korisnika
+"""LoginRequiredMixin - da može otvoriti samo prijavljen korisnik"""
+class OtherUserProfileDetailView(LoginRequiredMixin, DetailView):
+
+    model = Profile
+    template_name = "user_profile/profile_detail.html"
+    # context_object_name = "profile" Ovo određuje pod kojim imenom će objekt biti dostupan u HTML-u. i zato se pristupa korisničkom imenu {{ profile.user.username }}
+    context_object_name = "profile"
+
+    # KOJI PROFIL PRIKAZUJEM
+    def get_object(self, queryset=None):
+        # PRIKAZUJE VRIJEDNBOST IZ URL-A
+        user_id = self.kwargs.get("user_id")
+
+        return Profile.objects.filter(
+            user__id=user_id
+        ).first()
+
+    # unutar ovog  get se vrši provjera da li profil postoji
+    def get(self, request, *args, **kwargs):
+        #ako profiol postoji daje profil u suprotnom je none
+        self.object = self.get_object()
+
+        # priprema podataka koji če biti poslani u html
+        context = self.get_context_data(
+            object=self.object
+        )
+
+        return self.render_to_response(context)
+    
+# class views profile update
+# izmjena profila trenutno prijavljenog korisnika
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+
+    model = Profile
+    form_class = ProfileUpdateForm
+    template_name = "user_profile/profile_update.html"
+
+    # Određujemo koji Profile korisnik smije mijenjati
+    def get_object(self, queryset=None):
+
+        return Profile.objects.get(
+            user=self.request.user
+        )
+
+    # Nakon uspješne izmjene vraćamo korisnika na njegov profil
+    def get_success_url(self):
+
+        return reverse_lazy("profile_detail")
 
 # login class login view
 class CustomLoginView(LoginView):

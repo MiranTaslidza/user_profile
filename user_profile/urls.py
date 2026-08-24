@@ -6,6 +6,11 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', views.all_user, name='all_user'),
+    path('profile/', views.ProfileDetailView.as_view(), name='profile_detail'), # prikaz profila prijavljenog korisnika
+    path('profile/<int:user_id>/', views.OtherUserProfileDetailView.as_view(), name='other_user_profile_detail'), # prikaz profila drugog korisnika
+    path('profile/edit/', views.ProfileUpdateView.as_view(), name='profile_update'), # update profila
+
+    # registracija, login i logout
     path('register/', views.RegisterView.as_view(), name='register'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),

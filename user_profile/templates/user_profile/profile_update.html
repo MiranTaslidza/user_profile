@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Profile {{ object.user.username }}{% endblock title %}
+
+{% load static %}
+
+{% block scripts %}
+{% endblock scripts %}
+
+{% block content %}
+
+<h2>Update Profile {{ object.user.username }}</h2>
+
+
+{% if object.avatar %}
+
+<img src="{{ object.avatar.url }}" alt="Avatar">
+
+{% else %}
+
+<img src="{% static 'img/default_avatar.png' %}" alt="Default avatar">
+
+{% endif %}
+
+<form method="post">
+
+
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        Save changes
+    </button>
+
+</form>
+
+
+{%endblock content %}
