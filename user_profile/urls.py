@@ -9,6 +9,7 @@ urlpatterns = [
     path('profile/', views.ProfileDetailView.as_view(), name='profile_detail'), # prikaz profila prijavljenog korisnika
     path('profile/<int:user_id>/', views.OtherUserProfileDetailView.as_view(), name='other_user_profile_detail'), # prikaz profila drugog korisnika
     path('profile/edit/', views.ProfileUpdateView.as_view(), name='profile_update'), # update profila
+    path('api/translate/', views.translate_batch_api, name='translate_batch_api'), # API endpoint za batch prevođenje teksta
 
     # registracija, login i logout
     path('register/', views.RegisterView.as_view(), name='register'),

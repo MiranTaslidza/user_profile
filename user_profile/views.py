@@ -16,6 +16,10 @@ from datetime import timedelta
 from django.views import View
 from django.views.generic import DetailView, UpdateView
 from .models.profile import Profile
+import json
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 # Model obično uvozimo iz models foldera kroz __init__.py ili direktno
 from .models.user import User
@@ -31,7 +35,7 @@ from .forms.email_change_form import EmailChangeForm
 from .forms.username_change_form import UsernameChangeForm
 from .services.google_oauth_service import get_google_authorization_url, exchange_code_for_token, get_google_user_info
 from .forms.profile_update_form import ProfileUpdateForm
-
+from .services.translation_service import TranslationService
 
 # prikaz svih korisnika
 def all_user(request):
@@ -720,3 +724,91 @@ class UserNameChange(LoginRequiredMixin, FormView):
 
 
         return super().form_valid(form)
+    
+    
+# translate
+@login_required
+@require_POST
+def translate_batch_api(request):
+
+    MAX_TEXTS = 128
+    MAX_TEXT_LENGTH = 5000
+
+    try:
+        data = json.loads(
+            request.body.decode("utf-8")
+        )
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse(
+            {
+                "error": "Invalid JSON request."
+            },
+            status=400,
+        )
+
+    texts = data.get("texts")
+
+    if not isinstance(texts, list):
+        return JsonResponse(
+            {
+                "error": "'texts' must be a list."
+            },
+            status=400,
+        )
+
+    if len(texts) > MAX_TEXTS:
+        return JsonResponse(
+            {
+                "error": f"Maximum {MAX_TEXTS} texts per request."
+            },
+            status=400,
+        )
+
+    for text in texts:
+
+        if not isinstance(text, str):
+            return JsonResponse(
+                {
+                    "error": "Every text must be a string."
+                },
+                status=400,
+            )
+
+        if len(text) > MAX_TEXT_LENGTH:
+            return JsonResponse(
+                {
+                    "error": (
+                        f"Maximum text length is "
+                        f"{MAX_TEXT_LENGTH} characters."
+                    )
+                },
+                status=400,
+            )
+
+    try:
+        results = TranslationService.translate_many_for_user(
+            texts=texts,
+            user=request.user,
+        )
+
+    except Exception:
+        return JsonResponse(
+            {
+                "error": "Translation service unavailable."
+            },
+            status=503,
+        )
+
+    return JsonResponse(
+        {
+            "translations": [
+                {
+                    "translated_text": result.translated_text,
+                    "detected_source_language": (
+                        result.detected_source_language
+                    ),
+                }
+                for result in results
+            ]
+        }
+    )
